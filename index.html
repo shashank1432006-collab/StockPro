@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockPro — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" onerror="loadQRFallback()"></script>
+<script>
+// Fallback QR library if CDN fails
+function loadQRFallback() {
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+  document.head.appendChild(s);
+}
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-icon">📦</div>
+    <div>
+      <div class="logo-text">StockPro</div>
+      <div class="logo-sub" id="shopNameDisplay">My Shop</div>
+    </div>
+    <button class="sidebar-close" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">MAIN</div>
+    <a class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard"><i class="fas fa-home"></i><span>Dashboard</span></a>
+    <a class="nav-item" onclick="showPage('stockgrid')" data-page="stockgrid"><i class="fas fa-th"></i><span>Stock Grid</span></a>
+    <a class="nav-item" onclick="showPage('products')" data-page="products"><i class="fas fa-boxes"></i><span>Products</span></a>
+    <a class="nav-item" onclick="showPage('categories')" data-page="categories"><i class="fas fa-tags"></i><span>Categories</span></a>
+    <a class="nav-item" onclick="showPage('addproduct')" data-page="addproduct"><i class="fas fa-plus-circle"></i><span>Add Product</span></a>
+    <div class="nav-label">ORDERS</div>
+    <a class="nav-item" onclick="showPage('bookings')" data-page="bookings"><i class="fas fa-calendar-check"></i><span>Bookings</span></a>
+    <a class="nav-item" onclick="showPage('returns')" data-page="returns"><i class="fas fa-undo-alt"></i><span>Returns & RTO</span></a>
+    <div class="nav-label">ANALYTICS</div>
+    <a class="nav-item" onclick="showPage('analytics')" data-page="analytics"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
+    <a class="nav-item" onclick="showPage('heatmap')" data-page="heatmap"><i class="fas fa-fire"></i><span>Heat Map</span></a>
+    <a class="nav-item" onclick="showPage('popular')" data-page="popular"><i class="fas fa-star"></i><span>Popular Products</span></a>
+    <div class="nav-label">TOOLS</div>
+    <a class="nav-item" onclick="showPage('profit')" data-page="profit"><i class="fas fa-calculator"></i><span>Profit Calculator</span></a>
+    <a class="nav-item" onclick="showPage('qrgen')" data-page="qrgen"><i class="fas fa-qrcode"></i><span>QR Generator</span></a>
+    <a class="nav-item" onclick="showPage('scanner')" data-page="scanner"><i class="fas fa-camera"></i><span>Scanner</span></a>
+    <a class="nav-item" onclick="showPage('invoice')" data-page="invoice"><i class="fas fa-file-invoice"></i><span>Invoice</span></a>
+    <a class="nav-item" onclick="showPage('settings')" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+  </nav>
+</aside>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- MAIN CONTENT -->
+<div class="main-wrap">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="globalSearch" placeholder="Search products..." oninput="globalSearchProducts(this.value)">
+      </div>
+      <button class="icon-btn" onclick="showPage('addproduct')" title="Add Product"><i class="fas fa-plus"></i></button>
+      <button class="icon-btn" onclick="exportExcel()" title="Export Excel"><i class="fas fa-file-excel"></i></button>
+      <div class="avatar-wrap" onclick="showPage('settings')">
+        <div class="avatar" id="userAvatar">U</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content" id="mainContent">
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <section id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <h2>Welcome back, <span id="welcomeName">User</span>! 👋</h2>
+          <p class="page-sub">Here's what's happening with your store today</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-accent" onclick="loadDashboard()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+      </div>
+      <!-- STAT CARDS -->
+      <div class="stats-grid">
+        <div class="stat-card stat-blue">
+          <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+          <div class="stat-info"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Products</div></div>
+          <div class="stat-trend up"><i class="fas fa-arrow-up"></i> Active</div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
+          <div class="stat-info"><div class="stat-num" id="stat-revenue">₹0</div><div class="stat-label">Total Revenue</div></div>
+          <div class="stat-trend up"><i class="fas fa-arrow-up"></i> Sales</div>
+        </div>
+        <div class="stat-card stat-red">
+          <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <div class="stat-info"><div class="stat-num" id="stat-outofstock">0</div><div class="stat-label">Out of Stock</div></div>
+          <div class="stat-trend down"><i class="fas fa-arrow-down"></i> Critical</div>
+        </div>
+        <div class="stat-card stat-yellow">
+          <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+          <div class="stat-info"><div class="stat-num" id="stat-sold">0</div><div class="stat-label">Total Sold</div></div>
+          <div class="stat-trend up"><i class="fas fa-arrow-up"></i> Units</div>
+        </div>
+        <div class="stat-card stat-purple">
+          <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+          <div class="stat-info"><div class="stat-num" id="stat-bookings">0</div><div class="stat-label">Total Bookings</div></div>
+          <div class="stat-trend up"><i class="fas fa-arrow-up"></i></div>
+        </div>
+        <div class="stat-card stat-cyan">
+          <div class="stat-icon"><i class="fas fa-undo-alt"></i></div>
+          <div class="stat-info"><div class="stat-num" id="stat-returns">0</div><div class="stat-label">Returns/RTO</div></div>
+          <div class="stat-trend down"><i class="fas fa-arrow-down"></i></div>
+        </div>
+      </div>
+      <!-- CHARTS ROW -->
+      <div class="charts-row">
+        <div class="chart-card wide">
+          <div class="chart-head"><h3>Monthly Sales Overview</h3></div>
+          <canvas id="monthlySalesChart" height="100"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><h3>Category Breakdown</h3></div>
+          <canvas id="categoryChart" height="120"></canvas>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-head"><h3>Revenue vs Returns</h3></div>
+          <canvas id="revenueChart" height="120"></canvas>
+        </div>
+        <div class="chart-card wide">
+          <div class="chart-head"><h3>Top 5 Popular Products</h3></div>
+          <canvas id="popularChart" height="100"></canvas>
+        </div>
+      </div>
+      <!-- LOW STOCK ALERT -->
+      <div class="section-card">
+        <div class="section-head"><h3>⚠️ Low Stock Alerts</h3><button class="btn-sm" onclick="showPage('stockgrid')">View All</button></div>
+        <div id="lowStockList" class="product-mini-list"></div>
+      </div>
+    </section>
+
+    <!-- ==================== STOCK GRID ==================== -->
+    <section id="page-stockgrid" class="page">
+      <div class="page-header">
+        <div><h2>📦 Stock Grid</h2><p class="page-sub">Visual overview — Green = In Stock, Red = Out of Stock</p></div>
+        <div class="header-actions">
+          <select class="filter-select" id="gridCategoryFilter" onchange="renderStockGrid()">
+            <option value="all">All Categories</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-legend">
+        <span class="legend-item green"><span class="legend-dot green-dot"></span> In Stock</span>
+        <span class="legend-item yellow"><span class="legend-dot yellow-dot"></span> Low Stock</span>
+        <span class="legend-item red"><span class="legend-dot red-dot"></span> Out of Stock</span>
+      </div>
+      <div id="stockGrid" class="stock-grid"></div>
+    </section>
+
+    <!-- ==================== PRODUCTS ==================== -->
+    <section id="page-products" class="page">
+      <div class="page-header">
+        <div><h2>🛍️ Products</h2><p class="page-sub">Manage all your products</p></div>
+        <div class="header-actions">
+          <input type="text" class="search-inp" id="prodSearch" placeholder="Search..." oninput="filterProducts()">
+          <select class="filter-select" id="prodCatFilter" onchange="filterProducts()">
+            <option value="all">All Categories</option>
+          </select>
+          <select class="filter-select" id="prodSort" onchange="filterProducts()">
+            <option value="newest">Newest First</option>
+            <option value="name">Name A-Z</option>
+            <option value="stock_asc">Stock ↑</option>
+            <option value="stock_desc">Stock ↓</option>
+            <option value="price">Price High</option>
+            <option value="sold">Most Sold</option>
+          </select>
+          <button class="btn-accent" onclick="showPage('addproduct')"><i class="fas fa-plus"></i> Add</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="pro-table" id="productsTable">
+          <thead><tr>
+            <th>S.No</th><th>Photo</th><th>Style ID</th><th>Code</th><th>Item Name</th>
+            <th>Category</th><th>Cost ₹</th><th>Customer ₹</th><th>Updated ₹</th>
+            <th>%</th><th>Delivery ₹</th><th>Stock</th><th>Sold</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="productsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== CATEGORIES ==================== -->
+    <section id="page-categories" class="page">
+      <div class="page-header">
+        <div><h2>🗂️ Categories</h2><p class="page-sub">Browse products by category</p></div>
+        <div class="header-actions">
+          <button class="btn-accent" onclick="addCategoryPrompt()"><i class="fas fa-plus"></i> New Category</button>
+        </div>
+      </div>
+      <div id="categoriesContainer" class="categories-container"></div>
+    </section>
+
+    <!-- ==================== ADD / EDIT PRODUCT ==================== -->
+    <section id="page-addproduct" class="page">
+      <div class="page-header">
+        <div><h2 id="addEditTitle">➕ Add New Product</h2><p class="page-sub" id="addEditSub">Fill in the details below</p></div>
+        <div class="header-actions">
+          <button class="btn-ghost" onclick="resetProductForm()"><i class="fas fa-times"></i> Clear</button>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-section">
+          <h3 class="form-section-title">📋 Basic Information</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Style ID <span class="req">*</span></label>
+              <input type="text" id="styleId" placeholder="e.g. NK-001" oninput="this.value=this.value.toUpperCase()">
+              <small class="field-note">⚠️ Unique — cannot repeat!</small>
+            </div>
+            <div class="form-group">
+              <label>Product Code <span class="req">*</span></label>
+              <input type="text" id="code" placeholder="e.g. AIR-MAX-90">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group wide">
+              <label>Item Name <span class="req">*</span></label>
+              <input type="text" id="itemName" placeholder="Full product name">
+            </div>
+            <div class="form-group">
+              <label>Category <span class="req">*</span></label>
+              <input type="text" id="category" placeholder="e.g. Footwear" list="catSuggestions">
+              <datalist id="catSuggestions"></datalist>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Supplier / Brand</label>
+            <input type="text" id="supplier" placeholder="e.g. Nike, Adidas">
+          </div>
+          <div class="form-group">
+            <label>Tags (comma-separated)</label>
+            <input type="text" id="tags" placeholder="e.g. trending, summer, bestseller">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">💰 Pricing</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Cost Price (₹)</label>
+              <input type="number" id="costPrice" placeholder="0" min="0" oninput="calcProfit()">
+            </div>
+            <div class="form-group">
+              <label>Current Customer Price (₹) <span class="req">*</span></label>
+              <input type="number" id="currentCustomerPrice" placeholder="0" min="0" oninput="calcProfit()">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Updated Customer Price (₹)</label>
+              <input type="number" id="updatedCustomerPrice" placeholder="Leave blank if same" min="0" oninput="calcProfit()">
+            </div>
+            <div class="form-group">
+              <label>Discount %</label>
+              <input type="number" id="percent" placeholder="0" min="0" max="100">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Delivery Fees (₹)</label>
+              <input type="number" id="deliveryFees" placeholder="0" min="0" oninput="calcProfit()">
+            </div>
+            <div class="form-group">
+              <label>Platform Fees (₹)</label>
+              <input type="number" id="platformFees" placeholder="0" min="0" oninput="calcProfit()">
+            </div>
+          </div>
+          <div class="profit-preview" id="profitPreview">
+            <div class="profit-row"><span>Selling Price:</span><span id="pp-sell">₹0</span></div>
+            <div class="profit-row"><span>Total Deductions:</span><span id="pp-ded" class="red-text">-₹0</span></div>
+            <div class="profit-row profit-total"><span>Net Profit:</span><span id="pp-profit" class="green-text">₹0</span></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">📦 Stock</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Current Stock</label>
+              <input type="number" id="currentStock" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>Minimum Stock Alert</label>
+              <input type="number" id="minimumStock" placeholder="5" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">📷 Product Photo</h3>
+          <div class="photo-upload" id="photoUploadArea">
+            <img id="photoPreview" src="" style="display:none">
+            <div id="photoPlaceholder">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click or drag to upload photo</p>
+              <small>JPG, PNG, GIF — Max 5MB</small>
+            </div>
+            <input type="file" id="productPhoto" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+          </div>
+          <button type="button" class="btn-upload" onclick="document.getElementById('productPhoto').click()">
+            <i class="fas fa-image"></i> Choose Photo
+          </button>
+        </div>
+      </div>
+      <div class="form-actions">
+        <input type="hidden" id="editProductId">
+        <button class="btn-cancel" onclick="resetProductForm()">Cancel</button>
+        <button class="btn-save" id="saveProductBtn" onclick="saveProduct()">
+          <i class="fas fa-save"></i> <span id="saveBtnText">Save Product</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== BOOKINGS ==================== -->
+    <section id="page-bookings" class="page">
+      <div class="page-header">
+        <div><h2>📋 Bookings</h2><p class="page-sub">Track all orders and bookings</p></div>
+        <div class="header-actions">
+          <button class="btn-accent" onclick="openBookingModal()"><i class="fas fa-plus"></i> New Booking</button>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="mini-stat blue"><i class="fas fa-calendar"></i><div><b id="b-total">0</b><span>Total</span></div></div>
+        <div class="mini-stat green"><i class="fas fa-check"></i><div><b id="b-delivered">0</b><span>Delivered</span></div></div>
+        <div class="mini-stat yellow"><i class="fas fa-clock"></i><div><b id="b-booked">0</b><span>Pending</span></div></div>
+        <div class="mini-stat red"><i class="fas fa-times"></i><div><b id="b-cancelled">0</b><span>Cancelled</span></div></div>
+      </div>
+      <div class="table-wrap" id="bookingsTable"></div>
+    </section>
+
+    <!-- ==================== RETURNS ==================== -->
+    <section id="page-returns" class="page">
+      <div class="page-header">
+        <div><h2>🔄 Returns & RTO</h2><p class="page-sub">Manage returned and RTO products</p></div>
+        <div class="header-actions">
+          <button class="btn-accent" onclick="openReturnModal()"><i class="fas fa-plus"></i> Log Return/RTO</button>
+        </div>
+      </div>
+      <div id="returnsContainer"></div>
+    </section>
+
+    <!-- ==================== ANALYTICS ==================== -->
+    <section id="page-analytics" class="page">
+      <div class="page-header">
+        <div><h2>📊 Analytics Dashboard</h2><p class="page-sub">Deep insights into your business</p></div>
+        <div class="header-actions">
+          <select class="filter-select" id="analyticsYear" onchange="loadAnalytics()">
+            <option>2025</option><option selected>2026</option>
+          </select>
+        </div>
+      </div>
+      <div class="analytics-grid">
+        <div class="chart-card full">
+          <div class="chart-head"><h3>📈 Monthly Sales Trend</h3></div>
+          <canvas id="analyticsTrendChart" height="80"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><h3>💰 Revenue by Category</h3></div>
+          <canvas id="analyticsRevChart" height="150"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><h3>🔄 Returns Analysis</h3></div>
+          <canvas id="analyticsReturnChart" height="150"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><h3>📦 Stock Status</h3></div>
+          <canvas id="analyticsStockChart" height="150"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head"><h3>🏪 Platform Distribution</h3></div>
+          <canvas id="analyticsPlatformChart" height="150"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HEAT MAP ==================== -->
+    <section id="page-heatmap" class="page">
+      <div class="page-header">
+        <div><h2>🔥 Sales Heat Map</h2><p class="page-sub">52-week sales activity map</p></div>
+      </div>
+      <div class="section-card">
+        <div class="heatmap-months" id="heatmapMonths"></div>
+        <div class="heatmap-grid" id="heatmapGrid"></div>
+        <div class="heatmap-legend">
+          <span>Less</span>
+          <div class="heatmap-legend-boxes">
+            <div class="hm-box level-0"></div>
+            <div class="hm-box level-1"></div>
+            <div class="hm-box level-2"></div>
+            <div class="hm-box level-3"></div>
+            <div class="hm-box level-4"></div>
+          </div>
+          <span>More</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== POPULAR ==================== -->
+    <section id="page-popular" class="page">
+      <div class="page-header">
+        <div><h2>⭐ Popular Products</h2><p class="page-sub">Top sellers ranked by units sold</p></div>
+      </div>
+      <div id="popularList" class="popular-list"></div>
+    </section>
+
+    <!-- ==================== PROFIT CALCULATOR ==================== -->
+    <section id="page-profit" class="page">
+      <div class="page-header">
+        <div><h2>💰 Profit Calculator</h2><p class="page-sub">Calculate your net profit per product</p></div>
+      </div>
+      <div class="calc-grid">
+        <div class="section-card">
+          <h3 class="form-section-title">Enter Product Details</h3>
+          <div class="calc-row">
+            <div class="calc-field">
+              <label>Selling Price (₹)</label>
+              <input type="number" id="calc-sell" placeholder="0" oninput="calculateProfit()">
+            </div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field">
+              <label>Cost / Buying Price (₹)</label>
+              <input type="number" id="calc-cost" placeholder="0" oninput="calculateProfit()">
+            </div>
+            <div class="calc-field">
+              <label>Delivery Charges (₹)</label>
+              <input type="number" id="calc-delivery" placeholder="0" oninput="calculateProfit()">
+            </div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field">
+              <label>Platform Fees (₹)</label>
+              <input type="number" id="calc-platform" placeholder="0" oninput="calculateProfit()">
+            </div>
+            <div class="calc-field">
+              <label>Other Charges (₹)</label>
+              <input type="number" id="calc-other" placeholder="0" oninput="calculateProfit()">
+            </div>
+          </div>
+          <div class="calc-row">
+            <div class="calc-field">
+              <label>GST % (optional)</label>
+              <input type="number" id="calc-gst" placeholder="0" oninput="calculateProfit()">
+            </div>
+            <div class="calc-field">
+              <label>Quantity</label>
+              <input type="number" id="calc-qty" placeholder="1" value="1" oninput="calculateProfit()">
+            </div>
+          </div>
+        </div>
+        <div class="section-card">
+          <h3 class="form-section-title">Profit Breakdown</h3>
+          <div class="profit-breakdown" id="profitBreakdown">
+            <div class="pb-row"><span>Selling Price</span><span id="pb-sell" class="green-text">₹0</span></div>
+            <div class="pb-row"><span>Cost Price</span><span id="pb-cost" class="red-text">-₹0</span></div>
+            <div class="pb-row"><span>Delivery</span><span id="pb-del" class="red-text">-₹0</span></div>
+            <div class="pb-row"><span>Platform Fees</span><span id="pb-plat" class="red-text">-₹0</span></div>
+            <div class="pb-row"><span>Other</span><span id="pb-other" class="red-text">-₹0</span></div>
+            <div class="pb-row"><span>GST</span><span id="pb-gst" class="red-text">-₹0</span></div>
+            <div class="pb-divider"></div>
+            <div class="pb-row pb-net"><span>Net Profit (1 unit)</span><span id="pb-net">₹0</span></div>
+            <div class="pb-row pb-total"><span>Total Profit (Qty)</span><span id="pb-total">₹0</span></div>
+            <div class="pb-row"><span>Profit Margin</span><span id="pb-margin">0%</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== QR GENERATOR ==================== -->
+    <section id="page-qrgen" class="page">
+      <div class="page-header">
+        <div><h2>🔲 QR Code Generator</h2><p class="page-sub">Generate QR codes for your products</p></div>
+      </div>
+      <div class="qr-layout">
+        <div class="section-card">
+          <h3 class="form-section-title">Select Product or Enter Custom</h3>
+          <div class="form-group">
+            <label>Select Product</label>
+            <select id="qrProductSelect" onchange="qrFromProduct(this.value)" class="form-select">
+              <option value="">-- Select a product --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Or Enter Custom Text/URL</label>
+            <input type="text" id="qrCustomText" placeholder="Enter text, URL, or product info">
+          </div>
+          <div class="form-group">
+            <label>QR Size</label>
+            <select id="qrSize" class="form-select">
+              <option value="128">Small (128px)</option>
+              <option value="200" selected>Medium (200px)</option>
+              <option value="300">Large (300px)</option>
+            </select>
+          </div>
+          <button class="btn-accent full-btn" onclick="generateQR()" style="padding:14px;font-size:15px;margin-top:4px"><i class="fas fa-qrcode"></i> ✅ Generate QR Code</button>
+        </div>
+        <div class="section-card qr-output-card">
+          <h3 class="form-section-title">Generated QR Code</h3>
+          <div id="qrOutput" class="qr-output"><p class="muted-text">QR code will appear here</p></div>
+          <div id="qrActions" style="display:none;text-align:center;margin-top:16px">
+            <button class="btn-accent" onclick="downloadQR()"><i class="fas fa-download"></i> Download QR</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SCANNER ==================== -->
+    <section id="page-scanner" class="page">
+      <div class="page-header">
+        <div><h2>📷 Barcode / QR Scanner</h2><p class="page-sub">Scan to find product details</p></div>
+      </div>
+      <div class="scanner-layout">
+        <div class="section-card">
+          <h3 class="form-section-title">Manual Lookup</h3>
+          <div class="form-group">
+            <label>Enter Style ID / Code / Name</label>
+            <input type="text" id="scanInput" placeholder="Type and press Enter..." onkeydown="if(event.key==='Enter') scanLookup()">
+          </div>
+          <button class="btn-accent full-btn" onclick="scanLookup()"><i class="fas fa-search"></i> Search Product</button>
+          <div id="scanResult" class="scan-result" style="display:none"></div>
+        </div>
+        <div class="section-card">
+          <h3 class="form-section-title">Camera Scanner</h3>
+          <div class="camera-wrap">
+            <video id="scannerVideo" class="scanner-video" autoplay playsinline></video>
+            <div class="scanner-overlay"><div class="scanner-line"></div></div>
+          </div>
+          <div style="text-align:center;margin-top:12px;display:flex;gap:10px;justify-content:center">
+            <button class="btn-accent" onclick="startCamera()"><i class="fas fa-camera"></i> Start Camera</button>
+            <button class="btn-ghost" onclick="stopCamera()"><i class="fas fa-stop"></i> Stop</button>
+          </div>
+          <p class="muted-text" style="text-align:center;margin-top:8px;font-size:12px">Point camera at QR code or barcode</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== INVOICE ==================== -->
+    <section id="page-invoice" class="page">
+      <div class="page-header">
+        <div><h2>🧾 Invoice Generator</h2><p class="page-sub">Generate daily & monthly PDF invoices</p></div>
+        <div class="header-actions">
+          <button class="btn-accent" onclick="generateInvoice('daily')"><i class="fas fa-calendar-day"></i> Daily</button>
+          <button class="btn-accent" onclick="generateInvoice('monthly')"><i class="fas fa-calendar-alt"></i> Monthly</button>
+          <button class="btn-green" onclick="printInvoice()"><i class="fas fa-print"></i> Print/PDF</button>
+        </div>
+      </div>
+      <div class="section-card" id="invoicePreview">
+        <div class="invoice-doc" id="invoiceDoc">
+          <div class="inv-header">
+            <div class="inv-logo"><div class="inv-logo-icon">📦</div><div><h2 class="inv-brand">StockPro</h2><p id="inv-shopname"></p></div></div>
+            <div class="inv-meta">
+              <div><b>Invoice #</b> <span id="inv-num">INV-001</span></div>
+              <div><b>Date:</b> <span id="inv-date"></span></div>
+              <div><b>Period:</b> <span id="inv-period"></span></div>
+            </div>
+          </div>
+          <table class="inv-table" id="invTable">
+            <thead><tr><th>#</th><th>Style ID</th><th>Product</th><th>Qty Sold</th><th>Price</th><th>Revenue</th></tr></thead>
+            <tbody id="invBody"></tbody>
+          </table>
+          <div class="inv-footer">
+            <div class="inv-total-row"><span>Subtotal:</span><span id="inv-subtotal">₹0</span></div>
+            <div class="inv-total-row"><span>Returns:</span><span id="inv-returns" class="red-text">-₹0</span></div>
+            <div class="inv-total-row inv-grand"><span>Grand Total:</span><span id="inv-grand">₹0</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SETTINGS ==================== -->
+    <section id="page-settings" class="page">
+      <div class="page-header">
+        <div><h2>⚙️ Settings</h2><p class="page-sub">Manage your profile and preferences</p></div>
+      </div>
+      <div class="settings-grid">
+        <div class="section-card">
+          <h3 class="form-section-title">👤 Profile</h3>
+          <div class="form-group"><label>Full Name</label><input type="text" id="set-name" placeholder="Your name"></div>
+          <div class="form-group"><label>Shop Name</label><input type="text" id="set-shop" placeholder="Your shop name"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="set-phone" placeholder="+91 ..."></div>
+          <div class="form-group"><label>Email (readonly)</label><input type="email" id="set-email" readonly></div>
+          <button class="btn-accent full-btn" onclick="updateProfile()"><i class="fas fa-save"></i> Save Profile</button>
+        </div>
+        <div class="section-card">
+          <h3 class="form-section-title">🎨 Preferences</h3>
+          <div class="toggle-row">
+            <div><b>Dark Mode</b><p>Toggle dark/light theme</p></div>
+            <label class="toggle"><input type="checkbox" id="darkModeToggle" checked onchange="toggleDarkMode()"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><b>Stock Alerts</b><p>Low stock notifications</p></div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><b>Auto Refresh</b><p>Refresh dashboard every 5 min</p></div>
+            <label class="toggle"><input type="checkbox" id="autoRefreshToggle"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="section-card">
+          <h3 class="form-section-title">⚡ Quick Actions</h3>
+          <button class="btn-accent full-btn" style="margin-bottom:10px" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Export All to Excel</button>
+          <button class="btn-ghost full-btn" style="margin-bottom:10px" onclick="generateInvoice('monthly');showPage('invoice')"><i class="fas fa-file-invoice"></i> Generate Monthly Report</button>
+          <button class="btn-danger full-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<div id="modalOverlay" class="modal-overlay" onclick="closeModal()"></div>
+
+<!-- Product Detail Modal -->
+<div id="productModal" class="modal">
+  <div class="modal-header">
+    <h3 id="modalProductName">Product Details</h3>
+    <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+  </div>
+  <div id="modalContent" class="modal-body"></div>
+</div>
+
+<!-- Booking Modal -->
+<div id="bookingModal" class="modal">
+  <div class="modal-header"><h3>Add Booking</h3><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div>
+  <div class="modal-body">
+    <div class="form-group"><label>Select Product</label><select id="bk-product" class="form-select"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Customer Name</label><input type="text" id="bk-customer" placeholder="Customer name"></div>
+      <div class="form-group"><label>Quantity</label><input type="number" id="bk-qty" value="1" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Platform</label>
+        <select id="bk-platform" class="form-select">
+          <option value="direct">Direct</option><option value="flipkart">Flipkart</option>
+          <option value="amazon">Amazon</option><option value="meesho">Meesho</option><option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Expected Delivery</label><input type="date" id="bk-delivery"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="bk-notes" placeholder="Any special notes..." rows="3"></textarea></div>
+    <button class="btn-accent full-btn" onclick="saveBooking()"><i class="fas fa-check"></i> Confirm Booking</button>
+  </div>
+</div>
+
+<!-- Return Modal -->
+<div id="returnModal" class="modal">
+  <div class="modal-header"><h3>Log Return / RTO</h3><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div>
+  <div class="modal-body">
+    <div class="form-group"><label>Select Product</label><select id="ret-product" class="form-select"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="ret-type" class="form-select">
+          <option value="return">Customer Return</option><option value="rto">RTO (Return to Origin)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Quantity</label><input type="number" id="ret-qty" value="1" min="1"></div>
+    </div>
+    <div class="form-group"><label>Reason</label><textarea id="ret-reason" placeholder="Reason for return..." rows="3"></textarea></div>
+    <button class="btn-accent full-btn" onclick="saveReturn()"><i class="fas fa-undo-alt"></i> Log Return</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script src="nike.js"></script>
+</body>
+</html>

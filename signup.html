@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStore — Create Account</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #05050f; --card: #0d0d1e; --border: rgba(255,255,255,0.07);
+      --cyan: #00d4ff; --purple: #9b59ff; --text: #e8eaf6; --muted: #8892b0;
+      --red: #ff2d55; --green: #00ff87; --amber: #ff6b35;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; overflow: hidden; }
+    .bg-canvas { position: fixed; inset: 0; background: radial-gradient(ellipse at 70% 30%, rgba(155,89,255,0.08) 0%, transparent 50%), radial-gradient(ellipse at 20% 70%, rgba(0,212,255,0.08) 0%, transparent 50%); }
+    .grid-overlay { position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px); background-size: 50px 50px; }
+    .signup-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 560px; padding: 44px 48px; position: relative; z-index: 1; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .brand { display: flex; align-items: center; gap: 12px; justify-content: center; margin-bottom: 32px; }
+    .brand-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--cyan), var(--purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .brand-name { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; background: linear-gradient(135deg, var(--cyan), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
+    h2 { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .subtitle { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
+    .input-wrap { position: relative; }
+    .input-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--muted); pointer-events: none; }
+    .form-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px 11px 40px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 14px; outline: none; transition: all 0.3s ease; }
+    .form-input:focus { border-color: var(--cyan); background: rgba(0,212,255,0.04); box-shadow: 0 0 0 3px rgba(0,212,255,0.08); }
+    .form-input::placeholder { color: rgba(136,146,176,0.5); }
+    .toggle-pass { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; }
+    .password-strength { height: 3px; border-radius: 2px; margin-top: 8px; background: var(--border); overflow: hidden; }
+    .password-strength-bar { height: 100%; border-radius: 2px; transition: all 0.3s ease; width: 0; }
+    .strength-text { font-size: 11px; margin-top: 4px; }
+    .btn-signup { width: 100%; background: linear-gradient(135deg, var(--cyan), #0099cc); color: #000; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; padding: 13px; border: none; border-radius: 10px; cursor: pointer; margin-top: 8px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-signup:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,212,255,0.35); }
+    .btn-signup:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-link { text-align: center; font-size: 14px; color: var(--muted); margin-top: 20px; }
+    .login-link a { color: var(--cyan); text-decoration: none; font-weight: 600; }
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .alert-error { background: rgba(255,45,85,0.1); border: 1px solid rgba(255,45,85,0.2); color: var(--red); }
+    .alert-success { background: rgba(0,255,135,0.1); border: 1px solid rgba(0,255,135,0.2); color: var(--green); }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 540px) { .signup-card { padding: 32px 24px; } .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="signup-card">
+    <div class="brand">
+      <div class="brand-icon">🛍️</div>
+      <div class="brand-name">SMARTSTORE</div>
+    </div>
+    <h2>Create Your Account 🚀</h2>
+    <p class="subtitle">Start managing your inventory today</p>
+
+    <div id="alert-box" style="display:none"></div>
+
+    <form id="signupForm" onsubmit="handleSignup(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="name" class="form-input" placeholder="Your full name" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shop Name</label>
+          <div class="input-wrap">
+            <span class="input-icon">🏪</span>
+            <input type="text" id="shopName" class="form-input" placeholder="Your shop name">
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <div class="input-wrap">
+            <span class="input-icon">📧</span>
+            <input type="email" id="email" class="form-input" placeholder="you@example.com" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <div class="input-wrap">
+            <span class="input-icon">📱</span>
+            <input type="tel" id="phone" class="form-input" placeholder="+91 00000 00000">
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="password" class="form-input" placeholder="Min 6 characters" required oninput="checkStrength(this.value)">
+            <button type="button" class="toggle-pass" onclick="togglePwd('password')">👁️</button>
+          </div>
+          <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+          <div class="strength-text" id="strengthText"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔐</span>
+            <input type="password" id="confirmPwd" class="form-input" placeholder="Repeat password" required>
+            <button type="button" class="toggle-pass" onclick="togglePwd('confirmPwd')">👁️</button>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn-signup" id="signupBtn">
+        <span id="btn-text">Create Account</span>
+      </button>
+    </form>
+    <div class="login-link">Already have an account? <a href="login.html">Sign In</a></div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('ss_token')) window.location.href = 'index.html';
+
+    function togglePwd(id) {
+      const el = document.getElementById(id);
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    function checkStrength(val) {
+      const bar = document.getElementById('strengthBar');
+      const text = document.getElementById('strengthText');
+      let score = 0;
+      if (val.length >= 6) score++;
+      if (val.length >= 10) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const configs = [
+        { w: '20%', c: '#ff2d55', t: '😰 Very Weak' },
+        { w: '40%', c: '#ff6b35', t: '🤔 Weak' },
+        { w: '60%', c: '#ffd700', t: '😊 Fair' },
+        { w: '80%', c: '#00d4ff', t: '💪 Strong' },
+        { w: '100%', c: '#00ff87', t: '🔥 Very Strong' },
+      ];
+      const cfg = configs[Math.max(0, score - 1)] || configs[0];
+      if (val.length > 0) {
+        bar.style.width = cfg.w;
+        bar.style.background = cfg.c;
+        text.style.color = cfg.c;
+        text.textContent = cfg.t;
+      } else {
+        bar.style.width = '0';
+        text.textContent = '';
+      }
+    }
+
+    function showAlert(msg, type = 'error') {
+      const box = document.getElementById('alert-box');
+      box.className = `alert alert-${type}`;
+      box.innerHTML = `<span>${type === 'error' ? '❌' : '✅'}</span><span>${msg}</span>`;
+      box.style.display = 'flex';
+    }
+
+    async function handleSignup(e) {
+      e.preventDefault();
+      const password = document.getElementById('password').value;
+      const confirmPwd = document.getElementById('confirmPwd').value;
+      if (password !== confirmPwd) { showAlert('Passwords do not match!'); return; }
+      if (password.length < 6) { showAlert('Password must be at least 6 characters.'); return; }
+
+      const btn = document.getElementById('signupBtn');
+      const btnText = document.getElementById('btn-text');
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span> Creating account...';
+
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('name').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            password,
+            shopName: document.getElementById('shopName').value.trim(),
+            phone: document.getElementById('phone').value.trim()
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          localStorage.setItem('ss_token', data.token);
+          localStorage.setItem('ss_user', JSON.stringify(data.user));
+          showAlert('Account created! Redirecting...', 'success');
+          setTimeout(() => window.location.href = 'index.html', 1200);
+        } else {
+          showAlert(data.message || 'Signup failed.');
+          btn.disabled = false;
+          btnText.textContent = 'Create Account';
+        }
+      } catch {
+        showAlert('Server error. Please try again.');
+        btn.disabled = false;
+        btnText.textContent = 'Create Account';
+      }
+    }
+  </script>
+</body>
+</html>
